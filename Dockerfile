@@ -18,4 +18,8 @@ RUN composer install --no-dev --optimize-autoloader
 # Setup Nginx config (You'll need a simple nginx.conf in your repo)
 COPY ./nginx.conf /etc/nginx/sites-available/default
 
+# Set permissions for Laravel
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
 CMD service nginx start && php-fpm
