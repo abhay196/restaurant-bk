@@ -19,7 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'http://192.168.31.43:3000'],
+    'allowed_origins' => [
+        'https://restaurant-fc.vercel.app', 
+        'http://localhost:3000', 
+        'http://192.168.31.43:3000'
+    ],
 
     'allowed_origins_patterns' => [],
 
