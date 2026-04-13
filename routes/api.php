@@ -67,3 +67,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/category/create', [CategoryController::class, 'store']);
 
 });
+
+
+Route::get('/clear-cache', function () {
+    Artisan::call('cache:clear');
+    return "Cache is cleared!";
+});

@@ -123,41 +123,31 @@ class RestaurantController extends Controller
      */
     public function edit(Request $request, $id)
     {
-        // ✅ Find restaurant
         $restaurant = Restaurant::find($id);
 
         if (!$restaurant) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Restaurant not found!',
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Restaurant not found!'], 404);
         }
 
-        // return response()->json([
-        //     'success' => false,
-        //     'message' => 'Restaurant updated successfully!',
-        //     'data'    => $request->all(),
-        // ]);
-        
-        // ✅ Validate request
+        // Use $request->all() for validation to avoid issues with boolean casting
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'address'     => 'required|string',
-            'phone'       => 'required|string|max:20',
-            'description' => 'nullable|string',
-            'is_available'=> 'required|boolean',
-            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048', 
-            'type'        => 'required|string|max:100',
+            'name'         => 'required|string|max:255',
+            'address'      => 'required|string',
+            'phone'        => 'required|string|max:20',
+            'description'  => 'nullable|string',
+            'is_available' => 'required', // Removed 'boolean' check here to prevent string "1" issues
+            'image'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048', 
+            'type'         => 'required|string|max:100',
         ]);
-        
+
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('restaurant', 'public'); 
-            $validated['image'] = $path;
+            // FIX: Use Cloudinary instead of 'public' disk
+            $uploadedFileUrl = $request->file('image')->storeOnCloudinary('restaurant')->getSecurePath();
+            $validated['image'] = $uploadedFileUrl;
         } else {
             $validated['image'] = $restaurant->image;
         }
 
-        // ✅ Update data
         $restaurant->update($validated);
 
         return response()->json([
