@@ -8,6 +8,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,5 +62,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('/members', [MemberController::class, 'index']);
     Route::post('/members/store', [MemberController::class, 'storeMember']);
+
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/category/create', [CategoryController::class, 'store']);
 
 });
