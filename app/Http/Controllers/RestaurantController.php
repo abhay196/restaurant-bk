@@ -44,23 +44,24 @@ class RestaurantController extends Controller
     public function create(Request $request)
     {
         try {
-            // ✅ Validate input
             $validated = $request->validate([
-                'name'        => 'required|string|max:255',
-                'address'     => 'required|string',
-                'phone'       => 'required|string|max:20',
-                'description' => 'nullable|string',
-                'is_available'=> 'required|boolean',
-                'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048', 
-                'type'        => 'required|string|max:100',
+                'name'         => 'required|string|max:255',
+                'address'      => 'required|string',
+                'phone'        => 'required|string|max:20',
+                'description'  => 'nullable|string',
+                'is_available' => 'required|boolean',
+                'image'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048', 
+                'type'         => 'required|string|max:100',
             ]);
 
             $validated['user_id'] = $request->user()->id ?? 1; 
             $validated['slug'] = strtolower($validated['name']);
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('restaurant', 'public'); 
-                $validated['image'] = $path;
+                // CHANGE THIS LINE: Change 'public' to 'cloudinary'
+                // This uploads directly to Cloudinary and returns the secure URL/path
+                $uploadedFileUrl = $request->file('image')->storeOnCloudinary('restaurant')->getSecurePath();
+                $validated['image'] = $uploadedFileUrl;
             }
 
             $restaurant = Restaurant::create($validated);
@@ -72,14 +73,12 @@ class RestaurantController extends Controller
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // ✅ Return JSON validation errors
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed.',
                 'errors'  => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            // ✅ Catch unexpected exceptions
             return response()->json([
                 'success' => false,
                 'message' => 'Server Error: ' . $e->getMessage(),
