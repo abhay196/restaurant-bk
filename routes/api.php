@@ -73,3 +73,11 @@ Route::get('/clear-cache', function () {
     Artisan::call('cache:clear');
     return "Cache is cleared!";
 });
+
+Route::get('/debug-env', function () {
+    return [
+        'cloudinary_url_exists' => !empty(env('CLOUDINARY_URL')),
+        'app_debug' => config('app.debug'),
+        'config_cached' => app()->configurationIsCached(),
+    ];
+});
