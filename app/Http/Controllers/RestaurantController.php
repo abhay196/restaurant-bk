@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache; // Don't forget to import this at the top!
+use Cloudinary\Cloudinary;
 
 
 class RestaurantController extends Controller
@@ -58,10 +59,20 @@ class RestaurantController extends Controller
             $validated['slug'] = strtolower($validated['name']);
 
             if ($request->hasFile('image')) {
-                // CHANGE THIS LINE: Change 'public' to 'cloudinary'
-                // This uploads directly to Cloudinary and returns the secure URL/path
-                $uploadedFileUrl = $request->file('image')->storeOnCloudinary('restaurant')->getSecurePath();
-                $validated['image'] = $uploadedFileUrl;
+                // 2. DIRECT UPLOAD LOGIC
+                $cloudinary = new Cloudinary([
+                    'cloud' => [
+                        'cloud_name' => 'dkwsaccn9',
+                        'api_key'    => '879561643833876',
+                        'api_secret' => 'X0DS2-kPB6xZcru_8qrz_6Oc--4',
+                    ],
+                ]);
+
+                $upload = $cloudinary->uploadApi()->upload($request->file('image')->getRealPath(), [
+                    'folder' => 'restaurant'
+                ]);
+
+                $validated['image'] = $upload['secure_url'];
             }
 
             $restaurant = Restaurant::create($validated);
@@ -141,9 +152,20 @@ class RestaurantController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            // FIX: Use Cloudinary instead of 'public' disk
-            $uploadedFileUrl = $request->file('image')->storeOnCloudinary('restaurant')->getSecurePath();
-            $validated['image'] = $uploadedFileUrl;
+            // 3. DIRECT UPLOAD LOGIC FOR EDIT
+            $cloudinary = new Cloudinary([
+                'cloud' => [
+                    'cloud_name' => 'dkwsaccn9',
+                    'api_key'    => '879561643833876',
+                    'api_secret' => 'X0DS2-kPB6xZcru_8qrz_6Oc--4',
+                ],
+            ]);
+
+            $upload = $cloudinary->uploadApi()->upload($request->file('image')->getRealPath(), [
+                'folder' => 'restaurant'
+            ]);
+
+            $validated['image'] = $upload['secure_url'];
         } else {
             $validated['image'] = $restaurant->image;
         }
