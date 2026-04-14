@@ -39,13 +39,14 @@ class Restaurant extends Model
             get: function ($value) {
                 if (!$value) return null;
 
-                // 1. If it's already a full URL, just return it
-                if (filter_var($value, FILTER_VALIDATE_URL)) {
+                // 1. If the string already starts with http, it's a full Cloudinary URL.
+                // Return it exactly as it is in the database.
+                if (str_starts_with($value, 'http')) {
                     return $value;
                 }
 
-                // 2. If it's a local path, point it to Cloudinary
-                // Replace 'your_cloud_name' with your actual Cloudinary name
+                // 2. ONLY if it's a partial path (like 'restaurant/abc.jpg'), 
+                // then we build the Cloudinary URL.
                 $cloudName = 'dkwsaccn9'; 
                 return "https://res.cloudinary.com/{$cloudName}/image/upload/v1/{$value}";
             },
