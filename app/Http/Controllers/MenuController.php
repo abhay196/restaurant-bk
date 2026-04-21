@@ -13,11 +13,16 @@ class MenuController extends Controller
      */
     public function index()
     {
-        $menus = Menu::with('restaurant:id,name')->get();
+        // Eager load both 'category' and 'restaurant'
+        // You can specify only the columns you need to keep the payload light
+        $menus = Menu::with([
+            'category:id,name', 
+            'restaurant:id,name'
+        ])->get();
 
         return response()->json([
             'success' => true,
-            'message' => 'Menus fetches successfully!',
+            'message' => 'Menus fetched successfully!',
             'data'    => $menus,
         ]);
     }
@@ -29,6 +34,7 @@ class MenuController extends Controller
     {
         $validated = $request->validate([
             'restaurant_id'    => 'required|integer|exists:restaurants,id',
+            'category_id'    => 'required|integer',
             'item_name'        => 'required|string|max:255',
             'item_description' => 'required|string|max:500',
             'price'            => 'nullable|numeric|min:0',
@@ -144,33 +150,31 @@ class MenuController extends Controller
     }
 
     public function menus($id)
-    {
-        // Step 1: Find the restaurant first.
-        $restaurant = Restaurant::find($id);
+{
+    // Step 1: Find the restaurant and eager load menus with their categories
+    // We use dot notation 'menus.category' to reach the nested relationship
+    $restaurant = Restaurant::with(['menus.category:id,name'])->find($id);
 
-        // If the RESTAURANT doesn't exist, then return a 404.
-        if (!$restaurant) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Restaurant not found',
-            ], 404);
-        }
-
-        // Step 2: Find all menus for that restaurant.
-        // If no menus are found, this will just be an empty collection [], which is perfect.
-        $menus = Menu::where('restaurant_id', $id)->get();
-
-        // Step 3: Return the data.
-        // The restaurant object is already complete, and $menus is either full or empty.
+    // If the RESTAURANT doesn't exist, return 404
+    if (!$restaurant) {
         return response()->json([
-            'success' => true,
-            'message' => 'Menu fetched successfully!',
-            'data' => [
-                'restaurant' => $restaurant,
-                'menus' => $menus,
-            ],
-        ]);
+            'success' => false,
+            'message' => 'Restaurant not found',
+        ], 404);
     }
+
+    // Step 2 & 3: Return the data
+    // $restaurant now contains a 'menus' property, and each menu item 
+    // now contains a 'category' object.
+    return response()->json([
+        'success' => true,
+        'message' => 'Menu fetched successfully!',
+        'data' => [
+            'restaurant' => $restaurant->makeHidden('menus'), // Clean up parent object
+            'menus'      => $restaurant->menus,
+        ],
+    ]);
+}
 
 
 }

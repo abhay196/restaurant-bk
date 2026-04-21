@@ -23,10 +23,10 @@ class RestaurantController extends Controller
         // 1. Define a unique key for this data
         // 2. Set time in seconds (e.g., 3600 = 1 hour)
         // 3. The closure runs ONLY if the cache is empty
-        $restaurants = Cache::remember('all_restaurants', 3600, function () {
-            Log::info("Fetching from Database (Cache Miss)"); 
-            return Restaurant::all();
-        });
+        // $restaurants = Cache::remember('all_restaurants', 3600, function () {
+        //     Log::info("Fetching from Database (Cache Miss)"); 
+        $restaurants = Restaurant::all();
+        // });
 
         $end = microtime(true);
         $executionTime = round(($end - $start) * 1000, 2); // Time in milliseconds

@@ -64,8 +64,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/members/store', [MemberController::class, 'storeMember']);
 
     Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/category/{id}', [CategoryController::class, 'show']);
     Route::post('/category/create', [CategoryController::class, 'store']);
 
+    Route::get('/run-migrations', function () {
+        try {
+            // This runs 'php artisan migrate'
+            Artisan::call('migrate', [
+                '--force' => true, // Necessary if running in production
+            ]);
+            
+            return response()->json([
+                'message' => 'Migrations executed successfully!',
+                'output' => Artisan::output()
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Migration failed.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
 });
 
 

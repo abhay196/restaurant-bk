@@ -54,9 +54,15 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Category $category)
+    public function show($id)
     {
-        //
+        $categories = Category::where('restaurant_id', $id)->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categories successfully',
+            'categories' => $categories
+        ]);
     }
 
     /**
