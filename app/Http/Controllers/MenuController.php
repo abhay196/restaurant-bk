@@ -44,8 +44,20 @@ class MenuController extends Controller
 
         // ✅ Handle image upload
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('menus', 'public'); 
-            $validated['image'] = $path;
+            // 2. DIRECT UPLOAD LOGIC
+            $cloudinary = new Cloudinary([
+                'cloud' => [
+                    'cloud_name' => 'dkwsaccn9',
+                    'api_key'    => '879561643833876',
+                    'api_secret' => 'X0DS2-kPB6xZcru_8qrz_6Oc--4',
+                ],
+            ]);
+
+            $upload = $cloudinary->uploadApi()->upload($request->file('image')->getRealPath(), [
+                'folder' => 'menu'
+            ]);
+
+            $validated['image'] = $upload['secure_url'];
         }
 
         // ✅ Insert into DB
@@ -150,31 +162,31 @@ class MenuController extends Controller
     }
 
     public function menus($id)
-{
-    // Step 1: Find the restaurant and eager load menus with their categories
-    // We use dot notation 'menus.category' to reach the nested relationship
-    $restaurant = Restaurant::with(['menus.category:id,name'])->find($id);
+    {
+        // Step 1: Find the restaurant and eager load menus with their categories
+        // We use dot notation 'menus.category' to reach the nested relationship
+        $restaurant = Restaurant::with(['menus.category:id,name'])->find($id);
 
-    // If the RESTAURANT doesn't exist, return 404
-    if (!$restaurant) {
+        // If the RESTAURANT doesn't exist, return 404
+        if (!$restaurant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Restaurant not found',
+            ], 404);
+        }
+
+        // Step 2 & 3: Return the data
+        // $restaurant now contains a 'menus' property, and each menu item 
+        // now contains a 'category' object.
         return response()->json([
-            'success' => false,
-            'message' => 'Restaurant not found',
-        ], 404);
+            'success' => true,
+            'message' => 'Menu fetched successfully!',
+            'data' => [
+                'restaurant' => $restaurant->makeHidden('menus'), // Clean up parent object
+                'menus'      => $restaurant->menus,
+            ],
+        ]);
     }
-
-    // Step 2 & 3: Return the data
-    // $restaurant now contains a 'menus' property, and each menu item 
-    // now contains a 'category' object.
-    return response()->json([
-        'success' => true,
-        'message' => 'Menu fetched successfully!',
-        'data' => [
-            'restaurant' => $restaurant->makeHidden('menus'), // Clean up parent object
-            'menus'      => $restaurant->menus,
-        ],
-    ]);
-}
 
 
 }
