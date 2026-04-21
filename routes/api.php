@@ -67,7 +67,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/category/{id}', [CategoryController::class, 'show']);
     Route::post('/category/create', [CategoryController::class, 'store']);
 
-    Route::get('/run-migrations', function () {
+});
+
+Route::get('/run-migrations', function () {
         try {
             // This runs 'php artisan migrate'
             Artisan::call('migrate', [
@@ -86,7 +88,6 @@ Route::middleware('auth:sanctum')->group(function () {
             ], 500);
         }
     });
-});
 
 
 Route::get('/clear-cache', function () {
