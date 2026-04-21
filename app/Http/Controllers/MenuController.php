@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Menu;
 use App\Models\Restaurant;
 use Illuminate\Http\Request;
+use Cloudinary\Cloudinary;
 
 class MenuController extends Controller
 {
@@ -54,7 +55,7 @@ class MenuController extends Controller
             ]);
 
             $upload = $cloudinary->uploadApi()->upload($request->file('image')->getRealPath(), [
-                'folder' => 'restaurant'
+                'folder' => 'menus'
             ]);
 
             $validated['image'] = $upload['secure_url'];
