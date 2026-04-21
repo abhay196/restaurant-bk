@@ -54,7 +54,7 @@ class MenuController extends Controller
             ]);
 
             $upload = $cloudinary->uploadApi()->upload($request->file('image')->getRealPath(), [
-                'folder' => 'menu'
+                'folder' => 'restaurant'
             ]);
 
             $validated['image'] = $upload['secure_url'];
