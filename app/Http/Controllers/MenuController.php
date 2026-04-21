@@ -55,7 +55,9 @@ class MenuController extends Controller
             ]);
 
             $upload = $cloudinary->uploadApi()->upload($request->file('image')->getRealPath(), [
-                'folder' => 'menus'
+                'folder'          => 'menus',
+                'use_filename'    => true,  // Use the original name of the file
+                'unique_filename' => true,  // Adds a small random suffix so names stay unique
             ]);
 
             $validated['image'] = $upload['secure_url'];
