@@ -35,6 +35,12 @@ Route::get('orders/{id}', [OrderController::class, 'show']);
 // Update order status - PUT http://localhost:8000/api/orders/{id}
 Route::put('orders/{id}', [OrderController::class, 'update']);
 
+Route::post('/cart', [CartController::class, 'addToCart'])->name('cart.addToCart');
+Route::get('/cart', [CartController::class, 'show'])->name('cart.show');
+Route::post('/cart/count', [CartController::class, 'cartCount'])->name('cart.cartCount');
+
+Route::post('/checkout', [CartController::class, 'checkout'])->name('checkout');
+
 Route::middleware('auth:sanctum')->group(function () {
     
     // Current logged-in user
@@ -53,16 +59,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/menu_items/create', [MenuController::class, 'create'])->name('menu.create');
     Route::post('/menu_items/edit/{id}', [MenuController::class, 'edit'])->name('menu.edit');
 
-    Route::post('/cart', [CartController::class, 'addToCart'])->name('cart.addToCart');
-    Route::get('/cart', [CartController::class, 'show'])->name('cart.show');
-    Route::post('/cart/count', [CartController::class, 'cartCount'])->name('cart.cartCount');
     
     
-    Route::post('/checkout', [CartController::class, 'checkout'])->name('checkout');
     
     Route::get('/members', [MemberController::class, 'index']);
     Route::post('/members/store', [MemberController::class, 'storeMember']);
-
+    
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/category/{id}', [CategoryController::class, 'show']);
     Route::post('/category/create', [CategoryController::class, 'store']);

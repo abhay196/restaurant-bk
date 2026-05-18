@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\User;
 use App\Models\Cart_items;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,7 @@ class CartController extends Controller
             // Item exists: Increment the quantity
             $cartItem->qty += $quantity;
             $cartItem->note = $note;
-            $cartItem->price = $cartItem->price * 2;
+            // price stays unchanged on qty update
             $cartItem->save();
         } else {
             // Item is new: Create a new CartItem record
@@ -180,45 +181,68 @@ class CartController extends Controller
 
     public function checkout(Request $request)
     {
-        $user = $request->user();
-
-        if (! $user) {
+        $user = User::where('mobile_number', $request->phone)
+            ->first();
+        // return $request;
+        if(!$user){
+            // user create
+            $user = new User;
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->mobile_number = $request->phone;
+            $firstName = explode(' ', trim($request->name))[0];
+    
+            // Get the last 4 digits of the mobile number
+            $lastFour = substr($request->mobile, -4);
+            
+            // Combine them for the password
+            $user->password = $firstName . $lastFour;
+            
+            $user->save(); 
+            $userid = $user->id;
+        } else {
+            $userid = $user->id;
+        }
+        
+        if (! $userid) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
-        $cart = DB::table('carts as ca')
-            ->select(
-                'ct.id as id',
-                'ct.qty',
-                'ct.price',
-                'ct.item_id',
-                'ct.cart_id',
-                'me.restaurant_id',
-                'me.item_name',
-                'me.item_description',
-                'me.image',
-            )
-            ->join('cart_items as ct', 'ct.cart_id', '=', 'ca.id')
-            ->join('menus as me', 'me.id', '=', 'ct.item_id')
-            ->where('ca.user_id', $user->id)
-            ->where('ca.is_active', 1)
-            ->get();
+        // $cart = DB::table('carts as ca')
+        //     ->select(
+        //         'ct.id as id',
+        //         'ct.qty',
+        //         'ct.price',
+        //         'ct.item_id',
+        //         'ct.cart_id',
+        //         'me.restaurant_id',
+        //         'me.item_name',
+        //         'me.item_description',
+        //         'me.image',
+        //     )
+        //     ->join('cart_items as ct', 'ct.cart_id', '=', 'ca.id')
+        //     ->join('menus as me', 'me.id', '=', 'ct.item_id')
+        //     ->where('ca.user_id', $userid)
+        //     ->where('ca.is_active', 1)
+        //     ->get();
 
-        $restaurantId = $cart->first()->restaurant_id;
-        $cartId = $cart->first()->cart_id;
-        $totalQty = $cart->sum('qty'); 
-        $totalPrice = $cart->sum('price'); 
-
+        $restaurantId = 1;
+        // $cartId = $cart->first()->cart_id;
+        $totalQty = collect($request->items)->sum('qty');
+    
+        $totalPrice = collect($request->items)->sum(function ($item) {
+            return $item['qty'] * $item['price'];
+        });
         DB::beginTransaction();
 
         try {
             // ✅ Insert into orders table
             $orderId = DB::table('orders')->insertGetId([
-                'user_id'        => $user->id,
+                'user_id'        => $userid,
                 'restaurant_id'  => $restaurantId,
                 'item_qty'       => $totalQty,
                 'total_price'    => $totalPrice,
-                'cart_id'        => $cartId,
+                // 'cart_id'        => $cartId,
                 'status'         => 'pending',
                 'paymemt_method' => 'cash',
                 'note'           => 'this order is done',
@@ -227,13 +251,13 @@ class CartController extends Controller
             ]);
 
             // ✅ Insert order items
-            foreach ($cart as $item) {
+            foreach ($request->items as $item) {
                 DB::table('order_items')->insert([
-                    'user_id'    => $user->id,
+                    'user_id'    => $userid,
                     'order_id'   => $orderId,
-                    'item_id'    => $item->item_id,
-                    'qty'        => $item->qty,
-                    'price'      => $item->price,
+                    'item_id'    => $item['item_id'],
+                    'qty'        => $item['qty'],
+                    'price'      => $item['price'],
                     'note'       => 'order done for this',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -241,10 +265,10 @@ class CartController extends Controller
             }
 
             // ✅ Deactivate cart after checkout
-            DB::table('carts')
-                ->where('user_id', $user->id)
-                ->where('is_active', 1)
-                ->update(['is_active' => 0]);
+            // DB::table('carts')
+            //     ->where('user_id', $userid)
+            //     ->where('is_active', 1)
+            //     ->update(['is_active' => 0]);
 
             DB::commit();
 
@@ -263,12 +287,6 @@ class CartController extends Controller
                 'error'   => $e->getMessage()
             ], 500);
         }
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Items has ordered successfully',
-            'data'    => $orderId // $cartData, // React uses this data to update its state
-        ]);
     }
 
 }
